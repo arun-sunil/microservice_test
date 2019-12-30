@@ -1,0 +1,68 @@
+version: '3'
+
+services:
+  rabbit:
+    image: rabbitmq:3-management
+    ports:
+      - "15672:15672"
+    restart: always
+
+  mongodb:
+    image: mongo:bionic
+    restart: always
+    environment:
+      - MONGO_DATA_DIR=/data/db
+      - MONGO_LOG_DIR=/dev/null
+    volumes:
+      - ./data/db:/data/db
+    ports:
+      - "27017:27017"
+
+  gateway:
+    image: gateway_image
+    container_name: gateway_container
+    restart: always
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    depends_on:
+      - rabbit
+    ports:
+      - "8000:8000"
+    environment:
+      RABBIT_PASSWORD: "guest"
+      RABBIT_USER: "guest"
+      RABBIT_HOST: "rabbit"
+      RABBIT_PORT: "5672"
+
+  airport:
+    image: airport_image
+    container_name: airport_container
+    restart: always
+    build:
+      context: ./airport
+      dockerfile: Dockerfile
+    depends_on:
+      - rabbit
+      - mongodb
+    environment:
+      RABBIT_PASSWORD: "guest"
+      RABBIT_USER: "guest"
+      RABBIT_HOST: "rabbit"
+      RABBIT_PORT: "5672"
+
+  trip:
+    image: trip_image
+    container_name: trip_container
+    restart: always
+    build:
+      context: ./trip
+      dockerfile: Dockerfile
+    depends_on:
+      - rabbit
+      - mongodb
+    environment:
+      RABBIT_PASSWORD: "guest"
+      RABBIT_USER: "guest"
+      RABBIT_HOST: "rabbit"
+      RABBIT_PORT: "5672"
